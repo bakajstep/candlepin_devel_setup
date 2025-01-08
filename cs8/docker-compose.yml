@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  postgresdb:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      POSTGRES_USER: candlepin
+      POSTGRES_PASSWORD: candlepin
+      POSTGRES_DB: candlepin
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    networks:
+      - candlepin-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U candlepin -d candlepin"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mariadb:
+    image: mariadb:10.6.14
+    command: --transaction-isolation=READ-COMMITTED --innodb-print-all-deadlocks=ON
+    container_name: mariadb
+    environment:
+      MARIADB_USER: candlepin
+      MARIADB_PASSWORD: candlepin
+      MARIADB_DATABASE: candlepin
+      MARIADB_ROOT_PASSWORD: candlepin
+    ports:
+      - "3306:3306"
+    networks:
+      - candlepin-network
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -ucandlepin -pcandlepin"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  candlepin:
+    container_name: candlepin
+    build:
+      context: .
+      dockerfile: Dockerfile
+    hostname: candlepin-el8.example.com
+    ports:
+      - "8443:8443"  # Candlepin
+      - "8000:8000"  # Tomcat remote debug
+    networks:
+      - candlepin-network
+    privileged: true
+    volumes:
+      - ../../candlepin:/candlepin
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    depends_on:
+      postgresdb:
+        condition: service_healthy
+      mariadb:
+        condition: service_healthy
+
+networks:
+  candlepin-network:
+    driver: bridge
