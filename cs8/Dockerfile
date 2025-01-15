@@ -19,7 +19,8 @@ ENV DBHOSTNAME="postgresdb"
 
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
-RUN sed -i 's|^JAVA_HOME=.*|JAVA_HOME=/usr/lib/jvm/java-17-openjdk|' /etc/tomcat/tomcat.conf
+RUN sed -i 's|^JAVA_HOME=.*|JAVA_HOME=/usr/lib/jvm/java-17-openjdk|' /etc/tomcat/tomcat.conf && \
+    echo 'CATALINA_OPTS="-Xdebug -Xrunjdwp:transport=dt_socket,address=*:8000,server=y,suspend=n"' >> /etc/tomcat/tomcat.conf
 
 # WORKDIR /opt
 # RUN wget -O jprofiler.tar.gz "https://download.ej-technologies.com/jprofiler/jprofiler_linux_14_0_5.tar.gz" \
@@ -31,5 +32,6 @@ RUN sed -i 's|^JAVA_HOME=.*|JAVA_HOME=/usr/lib/jvm/java-17-openjdk|' /etc/tomcat
 # ENV JAVA_TOOL_OPTIONS="-agentpath:$JPROFILER_HOME/bin/linux-x64/libjprofilerti.so=port=8849"
 
 WORKDIR /candlepin
+EXPOSE 8000
 
 CMD ["/usr/sbin/init"]
